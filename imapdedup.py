@@ -115,6 +115,12 @@ def get_arguments(args: Optional[List[str]] = None) -> Tuple[argparse.Namespace,
         help="Use a checksum of several mail headers, instead of the Message-ID",
     )
     parser.add_argument(
+        "-i",
+        "--save-ids",
+        dest="save_ids",
+        help="Save IDs of all messages found to a file",
+    )
+    parser.add_argument(
         "-b",
         "--sentbefore",
         dest="sent_before",
@@ -155,11 +161,11 @@ def get_arguments(args: Optional[List[str]] = None) -> Tuple[argparse.Namespace,
         help="Walk through the folders in reverse order",
     )
     parser.add_argument(
-        "-t", "--only-tag", dest="tag_name", 
+        "-t", "--only-tag", dest="tag_name",
         help="Tag duplicates with specificied tag instead of deleting them"
     )
     parser.add_argument(
-        "-y", "--copy", dest="copy_mailbox", 
+        "-y", "--copy", dest="copy_mailbox",
         help="Copy messages to specified mailbox before deleting them from current location."
     )
     parser.add_argument('mailbox', nargs='*')
@@ -317,7 +323,7 @@ def get_matching_msgnums(server: imaplib.IMAP4, query: str, sent_before: Optiona
         query = f"{query} SENTBEFORE {sent_before}"
         print(f"Getting matching messages sent before {sent_before}")
     deleted_info = check_response(server.search(None, query))
-    if deleted_info and deleted_info[0]:   
+    if deleted_info and deleted_info[0]:
         # If neither None nor empty nor [None], then
         # the first item should be a list of msg ids
         resp = [int(n) for n in deleted_info[0].split()]
@@ -363,7 +369,7 @@ def get_msg_headers(server: imaplib.IMAP4, msg_ids: List[int]) -> List[Tuple[int
     """
     Get the dict of headers for each message in the list of provided IDs.
     Return a list of tuples:  [ (msgid, header_bytes), (msgid, header_bytes)... ]
-    The returned header_bytes can be parsed by 
+    The returned header_bytes can be parsed by
     """
     # Get the header info for each message
     message_ids_str = ",".join(map(str, msg_ids))
@@ -496,7 +502,7 @@ def process(options, mboxes: List[str]):
             numdeleted = len(get_deleted_msgnums(server, options.sent_before))
             print(f'{numdeleted or "No"} message(s) currently marked as deleted in {mbox}')
 
-            # Now get a list of the ones that aren't deleted. 
+            # Now get a list of the ones that aren't deleted.
             # That's what we'll actually use.
             msgnums = get_undeleted_msgnums(server, options.sent_before)
             print(f"{len(msgnums)} others in {mbox}")
@@ -534,7 +540,7 @@ def process(options, mboxes: List[str]):
                                     mbox, mnum, msg_ids[msg_id],
                                     options.dry_run and "would" or "will",
                                     "tagged as '%s'" % options.tag_name if options.tag_name else "marked as deleted",
-                                ) 
+                                )
                             )
                             if options.show or options.verbose:
                                 print(
@@ -551,7 +557,14 @@ def process(options, mboxes: List[str]):
             # OK - we've been through this mailbox, and msgs_to_delete holds
             # a list of the duplicates we've found.
 
-            if not msgs_to_delete:
+            if options.save_ids:
+                # for msg_id, mbox_path in msg_ids.items():
+                # with open(options.save_ids, 'wt') as f:
+                #     for msg_id in msg_ids.keys():
+                #         print(msg_id, file=f)
+                pass
+
+            elif not msgs_to_delete:
                 print(f"No duplicates were found in {mbox}")
 
             else:
@@ -599,6 +612,13 @@ def process(options, mboxes: List[str]):
                         "There are now %s messages tagged as '%s' in %s."
                         % (numtagged, options.tag_name, mbox)
                     )
+
+        if options.save_ids:
+            # for msg_id, mbox_path in msg_ids.items():
+            with open(options.save_ids, 'wt') as f:
+                # for msg_id in sorted(msg_ids.keys()):
+                for msg_id in msg_ids.keys():
+                    print(msg_id, file=f)
 
         if not options.no_close:
             server.close()
