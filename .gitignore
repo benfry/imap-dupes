@@ -9,5 +9,9 @@ venv
 .idea/
 
 /23*
+
 google.py
 franklin.py
+
+/work
+fry.py

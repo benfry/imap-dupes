@@ -31,6 +31,7 @@
 import getpass
 import hashlib
 import imaplib
+import json
 import os
 import argparse
 import re
@@ -145,6 +146,12 @@ def get_arguments(args: Optional[List[str]] = None) -> Tuple[argparse.Namespace,
         dest="just_list",
         action="store_true",
         help="Just list mailboxes",
+    )
+    parser.add_argument(
+        "--save-list",
+        dest="save_list",
+        action="store_true",
+        help="Save list of mailboxes to list.json",
     )
     parser.add_argument(
         "-r",
@@ -456,6 +463,21 @@ def process(options, mboxes: List[str]):
     if options.just_list:
         for mb in get_mailbox_list(server):
             print(mb)
+        return
+
+    if options.save_list:
+        mailbox_list = get_mailbox_list(server)
+        # HERE = os.path.dirname(os.path.realpath(__file__))
+        # list_path = os.path.join(HERE, 'list.json')
+        # if not os.path.exists(list_path):
+            # with open(list_path, 'wt') as f:
+            #     json.dump(mailbox_list, f, indent=2, separators=(',', ': '), sort_keys=True)
+            # return
+        # else:
+        #     print(f'First remove {list_path}')
+        #     sys.exit(1)
+        with open(options.save_list, 'wt') as f:
+            json.dump(mailbox_list, f, indent=2, separators=(',', ': '), sort_keys=True)
         return
 
     if len(mboxes) == 0:
