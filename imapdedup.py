@@ -144,13 +144,11 @@ def get_arguments(args: Optional[List[str]] = None) -> Tuple[argparse.Namespace,
         "-l",
         "--list",
         dest="just_list",
-        action="store_true",
         help="Just list mailboxes",
     )
     parser.add_argument(
         "--save-list",
         dest="save_list",
-        action="store_true",
         help="Save list of mailboxes to list.json",
     )
     parser.add_argument(
