@@ -122,6 +122,11 @@ def get_arguments(args: Optional[List[str]] = None) -> Tuple[argparse.Namespace,
         help="Save IDs of all messages found to a file",
     )
     parser.add_argument(
+        "--delete-ids",
+        dest="delete_ids",
+        help="Read a list of IDs and mark all of them for deletion if found on the server",
+    )
+    parser.add_argument(
         "-b",
         "--sentbefore",
         dest="sent_before",
@@ -478,6 +483,12 @@ def process(options, mboxes: List[str]):
             json.dump(mailbox_list, f, indent=2, separators=(',', ': '), sort_keys=True)
         return
 
+    delete_set = set()
+    if options.delete_ids:
+        with open(options.delete_ids) as f:
+            for line in f:
+                delete_set.add(line.strip())
+
     if len(mboxes) == 0:
         sys.stderr.write("\nError: Must specify mailbox\n")
         sys.exit(1)
@@ -551,6 +562,11 @@ def process(options, mboxes: List[str]):
                     )
 
                     if msg_id:
+                        if options.delete_ids and msg_id in delete_set:
+                            # artificially add this entry using the same format as the others
+                            # (can't just mark the id for deletion because we need mbox and mnum)
+                            msg_ids[msg_id] = f"{mbox}_{mnum}"
+
                         # If we've seen this message before, record it as one to be
                         # deleted in this mailbox.
                         if msg_id in msg_ids:
