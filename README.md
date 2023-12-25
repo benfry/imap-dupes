@@ -1,3 +1,6 @@
+> This is a personal fork that uses a different sequence than the way the original code was intended to be used (and adds `clean.py` to handle everything). It’s not expected to be useful for anyone else, and is only public because it’s forking an already public repository. Many thanks to the original author for all their hard work!
+
+
 # IMAPdedup
 *A duplicate email message remover*
 
