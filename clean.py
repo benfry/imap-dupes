@@ -1,15 +1,30 @@
 #!/usr/bin/env python3
 
 '''
+Cleanup script to deal with Apple Mail placing thousands of emails in
+local "Recovered Messages" folders. After moving these to an IMAP folder,
+this script is used to scan source accounts and then purge entries from
+that IMAP folder.
+
+Config is read from a JSON file with login parameters for the source
+and target server. Action happens in multiple passes:
+
+1. If the config is called 'blah.json', start this with './clean.py blah.json'.
+   This will create the folder 'blah' and list all folders on the source.
+
+2. Edit blah/mailboxes.json to remove folders that should not be scanned.
+   Run the script again to download all message IDs from those folders.
+
+3. Run the script a third time to get all messages IDs from the (single)
+   target IMAP folder where the "Recovered Messages" were uploaded.
+
+4. Run a fourth time to mark all messages seen in the first folders
+   for deletion in the target folder. (Un-comment the --dry-run at
+   line ~89 in this file to not delete, and just list what would happen.)
+
 If using a Google Mail account, need to first set an app password:
 https://myaccount.google.com/u/2/apppasswords
 (the /u/2 depends on which Google account is in the browser...)
-
-Connects to an account, and either lists mailboxes or
-pulls all message IDs and writes them to a file.
-
-1. Make sure no list.json file exists, run this once.
-2. Edit the list.json file to remove mailboxes that should not be included.
 '''
 
 import json
@@ -18,10 +33,6 @@ import sys
 
 import imapdedup
 
-# HERE = os.path.dirname(os.path.realpath(__file__))
-# WORK = os.path.join(HERE, 'work')
-# if not os.path.exists(WORK):
-#     os.makedirs(WORK)
 
 def handle(config_path):
     if not os.path.exists(config_path):
