@@ -13,4 +13,6 @@ venv
 /work
 *.json
 *.tsv
+*.gz
+
 
