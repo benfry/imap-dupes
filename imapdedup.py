@@ -234,15 +234,50 @@ def parse_list_response(line: bytes):
     return (flags, delimiter, mailbox_name)
 
 
+def other_encodings(header_list):
+    for btext, charset in header_list:
+        if charset != None and charset != 'utf-8':
+            return True
+    return False
+
+
 def str_header(parsed_message: Message, name: str) -> str:
     """"
     Return the value (of the first instance, if more than one) of
     the given header, as a unicode string.
     """
+    # print()
     hdrlist = decode_header(parsed_message.get(name, ""))
-    btext, charset = hdrlist[0]
-    text = btext if isinstance(btext, str) else btext.decode("utf-8", "ignore")
-    return text.lstrip()
+    # print(hdrlist)
+
+    # if len(hdrlist) > 1 and name != 'From':
+    #     print(f'{len(hdrlist)} headers for {name}')
+    #     print(hdrlist)
+    #     # exit(1)
+
+    # When there's more than one 'header' in the list, it appears to just be
+    # different pieces of one longer header, each of which may or may not
+    # have an encoding. Might be the From name using an encoding followed
+    # by the email address portion not using anything. Or for a Subject header,
+    # A message in plain text, then interstitial emoji-style material with its
+    # own encoding, followed by additional text with another charset.
+    decoded = ''
+    for btext, charset in hdrlist:
+        if type(btext) is str:
+            decoded += btext
+        elif charset:
+            if charset == 'unknown-8bit':
+                charset = 'utf-8'
+            decoded += btext.decode(charset)
+        else:
+            decoded += btext.decode('utf-8')  # probably ASCII, but...
+    if len(hdrlist) > 1 and name != 'From':
+        if other_encodings(hdrlist):
+            print(f'{len(hdrlist)} headers for {name}')
+            print(hdrlist)
+            print(f'Decoded to: {decoded}')
+            print()
+    return decoded
 
 
 def get_message_id(
@@ -566,11 +601,12 @@ def process(options, mboxes: List[str]):
                     from_header = str_header(mp, "From")
                     # failing with headers that look like:
                     # From: =?iso-8859-1?B?VGhlIFNhdHVybiBUZWFt?= <saturnteam@email.saturn.bfi0.com>
-                    # if '@' not in from_header:
-                    #     print('no email found in "from"')
-                    #     print(mp)
-                    #     exit(1)
-                    print(from_header)
+                    if '@' not in from_header:
+                        print()
+                        print('no email found in "from"')
+                        print(mp)
+                        # exit(1)
+                    # print(from_header)
                     if '<' in from_header and '>' in from_header:
                         from_email = from_header[from_header.index('<') + 1:from_header.index('>')]
                     else:
