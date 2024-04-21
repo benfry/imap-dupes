@@ -241,6 +241,32 @@ def other_encodings(header_list):
     return False
 
 
+def is_ascii(bytes):
+    ''' There must be a better way to do this.
+    '''
+    for b in bytes:
+        if b > 127:
+            return False
+    return True
+
+
+# a whole mess of em: https://gist.github.com/tushortz/9fbde5d023c0a0204333267840b592f9
+# https://www.utf8-chartable.de/unicode-utf8-table.pl?start=8192&number=128&utf8=string-literal
+COMMON_UTF8 = set([
+    b'\xe2\x80\x99',  # apostrophe
+    b'\xe2\x80\xa6',  # ellipsis
+    b'\xe2\x80\x94',  # dash
+    b'\xe2\x80\x8b',  # zero width space
+    b'\xc2\xa0',  # nbsp
+])
+
+def has_common_utf8(bytes):
+    for entry in COMMON_UTF8:
+        if entry in bytes:
+            return True
+    return False
+
+
 def str_header(parsed_message: Message, name: str) -> str:
     """"
     Return the value (of the first instance, if more than one) of
@@ -267,8 +293,21 @@ def str_header(parsed_message: Message, name: str) -> str:
             decoded += btext
         elif charset:
             if charset == 'unknown-8bit':
+                # could test whether just ASCII, or test UTF-8 conversion
+                # against typical things like smart quotes or known emojis,
+                # but not really needed at the moment
+                # try:
+                #     maybe = btext.decode('ASCII')  # this may not throw errors?
+                # except:
                 charset = 'utf-8'
-            decoded += btext.decode(charset)
+            maybe = btext.decode(charset)
+            # print(f'unknown-8bit encoding: converted {btext} to {maybe}')
+            if not is_ascii(btext) and not has_common_utf8(btext):
+                print('found unknown-8bit encoding')
+                print(btext)
+                print(maybe)
+                print()
+            decoded += maybe
         else:
             decoded += btext.decode('utf-8')  # probably ASCII, but...
     if len(hdrlist) > 1 and name != 'From':
