@@ -257,7 +257,16 @@ COMMON_UTF8 = set([
     b'\xe2\x80\xa6',  # ellipsis
     b'\xe2\x80\x94',  # dash
     b'\xe2\x80\x8b',  # zero width space
+
     b'\xc2\xa0',  # nbsp
+    b'\xc2\xae',  # registered trademark
+
+    b'\xe2\xad\x90',  # star emoji
+    b'\xe2\x9c\xa8',  # sparkle emoji
+
+    b'\xf0\x9f\x94\xa5',  # fire emoji
+    b'\xf0\x9f\x92\x8e',  # diamond emoji
+    b'\xf0\x9f\x8d\xb7',  # wine emoji
 ])
 
 def has_common_utf8(bytes):
