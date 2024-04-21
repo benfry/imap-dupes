@@ -116,6 +116,11 @@ def get_arguments(args: Optional[List[str]] = None) -> Tuple[argparse.Namespace,
         help="Use a checksum of several mail headers, instead of the Message-ID",
     )
     parser.add_argument(
+        "--save-msg-list",
+        dest="save_msg_list",
+        help="Save list of messages, subjects, senders, etc to a file",
+    )
+    parser.add_argument(
         "-i",
         "--save-ids",
         dest="save_ids",
@@ -519,6 +524,7 @@ def process(options, mboxes: List[str]):
         parser = BytesParser()  # can be the same for all mailboxes
         # Create a list of previously seen message IDs, in any mailbox
         msg_ids: Dict[str, str] = {}
+        msg_list = [ ]
         for mbox in mboxes:
             msgs_to_delete = []  # should be reset for each mbox
             msg_map = {}  # should be reset for each mbox
@@ -551,6 +557,32 @@ def process(options, mboxes: List[str]):
                 for mnum, hinfo in get_msg_headers(server, msgnums[i: i + chunkSize]):
                     # Parse the header info into a Message object
                     mp = parser.parsebytes(hinfo)
+
+                    # print(mp)
+                    # print("From: " + str_header(mp, "From"))
+                    # print("Subject: " + str_header(mp, "Subject"))
+                    # print("Date: " + str_header(mp, "Date"))
+                    # weird order due to the specific use case
+                    from_header = str_header(mp, "From")
+                    # failing with headers that look like:
+                    # From: =?iso-8859-1?B?VGhlIFNhdHVybiBUZWFt?= <saturnteam@email.saturn.bfi0.com>
+                    # if '@' not in from_header:
+                    #     print('no email found in "from"')
+                    #     print(mp)
+                    #     exit(1)
+                    print(from_header)
+                    if '<' in from_header and '>' in from_header:
+                        from_email = from_header[from_header.index('<') + 1:from_header.index('>')]
+                    else:
+                        from_email = from_header
+                    # print(from_email)
+                    msg_list.append('\t'.join([
+                        from_header,
+                        from_email,
+                        str_header(mp, "Subject"),
+                        str_header(mp, "Date")
+                    ]))
+                    # exit()
 
                     if options.verbose:
                         print(f"Checking {mbox} message {mnum}")
@@ -594,7 +626,7 @@ def process(options, mboxes: List[str]):
             # OK - we've been through this mailbox, and msgs_to_delete holds
             # a list of the duplicates we've found.
 
-            if options.save_ids:
+            if options.save_ids or options.save_msg_list:
                 # for msg_id, mbox_path in msg_ids.items():
                 # with open(options.save_ids, 'wt') as f:
                 #     for msg_id in msg_ids.keys():
@@ -656,6 +688,15 @@ def process(options, mboxes: List[str]):
                 # for msg_id in sorted(msg_ids.keys()):
                 for msg_id in msg_ids.keys():
                     print(msg_id, file=f)
+
+        if options.save_msg_list:
+            with open(options.save_msg_list, 'wt') as f:
+                # for msg_id in sorted(msg_ids.keys()):
+                # for msg_id in msg_ids.keys():
+                #     print(msg_id, file=f)
+                print('from\temail\tsubject\tdate', file=f)
+                for line in msg_list:
+                    print(line, file=f)
 
         if not options.no_close:
             server.close()
