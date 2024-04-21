@@ -35,27 +35,27 @@ import imapdedup
 
 
 def handle_account(key, source_options, work_path):
-    list_path = os.path.join(work_path, 'mailboxes.json')
+    folder_list_path = os.path.join(work_path, 'folders.json')
     # source_id_path = os.path.join(work_path, 'source-ids.txt')
     # target_id_path = os.path.join(work_path, 'target-ids.txt')
-    list_path = os.path.join(work_path, 'messages.tsv')
+    msg_list_path = os.path.join(work_path, 'messages.tsv')
 
-    if not os.path.exists(list_path):
-        print(f'Saving list of mailboxes to {list_path}')
-        print('Remove any entries from that file, and run again to create a list of IDs')
+    if not os.path.exists(folder_list_path):
+        print(f'Saving list of mailboxes to {folder_list_path}')
+        print('Remove any entries from that file, and then run again to create a list of messages')
         options = [
-            "--save-list", list_path
+            "--save-list", folder_list_path
         ]
         imapdedup.process(*imapdedup.get_arguments(source_options + options))
 
-    elif not os.path.exists(list_path):
+    elif not os.path.exists(msg_list_path):
         # print(f'Writing a list of all message IDs from the source to {source_id_path}')
         # print('Run again to create the list of IDs on the target.')
         options = [
-            "--save-list", list_path,
+            "--save-msg-list", msg_list_path,
             "--dry-run"  # don't mark any found items for deletion
         ]
-        with open(list_path, 'r') as f:
+        with open(folder_list_path, 'r') as f:
             mboxes = json.load(f)
 
         imapdedup.process(*imapdedup.get_arguments(source_options + options + mboxes))

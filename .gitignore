@@ -12,4 +12,5 @@ venv
 
 /work
 *.json
+*.tsv
 
