@@ -457,7 +457,8 @@ def process(options, mboxes: List[str]):
             else:
                 # Standard single user password-based login
                 server.login(options.user, options.password)
-    except:
+    except Exception as e:
+        print(e)
         sys.stderr.write("\nError: Login failed\n")
         sys.exit(1)
 
