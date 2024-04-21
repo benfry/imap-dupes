@@ -34,10 +34,13 @@ import sys
 import imapdedup
 
 
-def handle_account(key, source_options, work_path):
+def handle_account(key, source_options):
+    HERE = os.path.dirname(os.path.realpath(__file__))
+    work_path = os.path.join(HERE, key)
+    if not os.path.exists(work_path):
+        os.makedirs(work_path)
+
     folder_list_path = os.path.join(work_path, 'folders.json')
-    # source_id_path = os.path.join(work_path, 'source-ids.txt')
-    # target_id_path = os.path.join(work_path, 'target-ids.txt')
     msg_list_path = os.path.join(work_path, 'messages.tsv')
 
     if not os.path.exists(folder_list_path):
@@ -66,16 +69,12 @@ def handle(config_path):
         print(f'{config_path} does not exist')
         sys.exit(1)
 
-    work_path = config_path[:-5]
-    if not os.path.exists(work_path):
-        os.makedirs(work_path)
-
     with open(config_path) as f:
         parsed = json.load(f)
 
     for key, args in parsed.items():
         print(key)
-        handle_account(key, args, work_path)
+        handle_account(key, args)
 
 
 if __name__ == "__main__":
