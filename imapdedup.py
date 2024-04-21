@@ -593,32 +593,25 @@ def process(options, mboxes: List[str]):
                     # Parse the header info into a Message object
                     mp = parser.parsebytes(hinfo)
 
-                    # print(mp)
-                    # print("From: " + str_header(mp, "From"))
-                    # print("Subject: " + str_header(mp, "Subject"))
-                    # print("Date: " + str_header(mp, "Date"))
-                    # weird order due to the specific use case
-                    from_header = str_header(mp, "From")
-                    # failing with headers that look like:
-                    # From: =?iso-8859-1?B?VGhlIFNhdHVybiBUZWFt?= <saturnteam@email.saturn.bfi0.com>
-                    if '@' not in from_header:
-                        print()
-                        print('no email found in "from"')
-                        print(mp)
-                        # exit(1)
-                    # print(from_header)
-                    if '<' in from_header and '>' in from_header:
-                        from_email = from_header[from_header.index('<') + 1:from_header.index('>')]
-                    else:
-                        from_email = from_header
-                    # print(from_email)
-                    msg_list.append('\t'.join([
-                        from_header,
-                        from_email,
-                        str_header(mp, "Subject"),
-                        str_header(mp, "Date")
-                    ]))
-                    # exit()
+                    if options.save_msg_list:
+                        from_header = str_header(mp, "From")
+                        if '@' not in from_header:
+                            print()
+                            print('no email found in "from"')
+                            print(mp)
+                            # exit(1)
+                        if '<' in from_header and '>' in from_header:
+                            from_email = from_header[from_header.index('<') + 1:from_header.index('>')]
+                        else:
+                            from_email = from_header
+
+                        # weird order due to the specific use case
+                        msg_list.append('\t'.join([
+                            from_header,
+                            from_email,
+                            str_header(mp, "Subject"),
+                            str_header(mp, "Date")
+                        ]))
 
                     if options.verbose:
                         print(f"Checking {mbox} message {mnum}")
